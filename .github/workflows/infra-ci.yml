@@ -25,11 +25,12 @@ jobs:
       - name: Terragrunt HCL Format Check
         run: terragrunt hcl fmt --check --diff
 
-      - name: Terragrunt Validate All
+      - name: Terragrunt Full Validation
+        working-directory: proxmox
         run: |
-          terragrunt run-all init --backend=false --upgrade
-          terragrunt validate --all
-          terragrunt plan --all -no-color -lock=false
+          terragrunt run init -- --backend=false --upgrade --terragrunt-working-dir .
+          terragrunt run validate --terragrunt-working-dir .
+          terragrunt run plan --no-color --lock=false --terragrunt-working-dir .
 
       - name: Terragrunt Plan All
         uses: wayofdev/gh-action-terragrunt-plan@v1
