@@ -17,13 +17,12 @@ locals {
   shared_ssh_public_key   = get_env("SHARED_SSH_PUBLIC_KEY", "")
   adguard_admin_password  = get_env("ADGUARD_ADMIN_PASSWORD", "")
   module_repo_url         = "git::git@github.com:Br00dkast/terragrunt-modules.git"
-  is_ci_validation        = get_env("CI_VALIDATION_SKIP_ALL", "false") == "true"
 }
 
 generate "backend" {
   path      = "backend.tf"
   if_exists = "overwrite_terragrunt"
-  contents  = get_env("CI_VALIDATION_SKIP_ALL", "false") == "true" ? "" : <<EOF
+  contents  = <<EOF
 terraform {
   backend "s3" {
     bucket                      = "${local.minio_bucket_name}"
@@ -45,7 +44,7 @@ EOF
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
-  contents  = get_env("CI_VALIDATION_SKIP_ALL", "false") == "true" ? "" : <<EOF
+  contents  = <<EOF
 
 provider "proxmox" {
   endpoint  = "${local.proxmox_api_url}"
