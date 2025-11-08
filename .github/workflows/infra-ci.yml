@@ -1,71 +1,74 @@
-name: Terragrunt CI Validation (Dynamic Matrix)
+name: Terragrunt CI Validation & Plan
 
 on:
   pull_request:
     branches: [main, master]
 
 jobs:
-  ## 1. FINDER JOB: Discovers all modules that need validation
-  find_modules:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.find.outputs.directories }} # Output the list of directories as a JSON matrix
+  validate_and_plan:
+    # IMPORTANT: Use your self-hosted runner label here (e.g., 'lab-runner').
+    runs-on: self-hosted
+    
+    # Set the execution context to the 'proxmox' directory.
+    defaults:
+      run:
+        working-directory: proxmox 
+
+    # --- 🔐 Environment Variable Injection (Mandatory for root.hcl) ---
+    env:
+      # All variables referenced by get_env() in root.hcl must be defined here.
+      # They pull their values from your GitHub repository secrets.
+      PROXMOX_API_URL: ${{ secrets.PROXMOX_API_URL }}
+      PROXMOX_TOKEN_ID: ${{ secrets.PROXMOX_TOKEN_ID }}
+      PROXMOX_SECRET: ${{ secrets.PROXMOX_SECRET }}
+      PROXMOX_API_TOKEN: ${{ secrets.PROXMOX_API_TOKEN }}
+      PROXMOX_SSH_PRIVATE_KEY: ${{ secrets.PROXMOX_SSH_PRIVATE_KEY }}
+      
+      NETBOX_SERVER_URL: ${{ secrets.NETBOX_SERVER_URL }}
+      NETBOX_API_TOKEN: ${{ secrets.NETBOX_API_TOKEN }}
+      
+      MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+      MINIO_BUCKET_NAME: ${{ secrets.MINIO_BUCKET_NAME }}
+      MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+      MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+      
+      SHARED_USERNAME: ${{ secrets.SHARED_USERNAME }}
+      SHARED_PASSWORD: ${{ secrets.SHARED_PASSWORD }}
+      SHARED_SSH_PUBLIC_KEY: ${{ secrets.SHARED_SSH_PUBLIC_KEY }}
+      ADGUARD_ADMIN_PASSWORD: ${{ secrets.ADGUARD_ADMIN_PASSWORD }}
+
     steps:
       - name: Checkout Code (Full History)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
-      - name: Get Changed Directories
-        id: find
-        run: |
-          # Finds all directories containing a terragrunt.hcl file starting from 'proxmox'
-          # This command ensures proper JSON formatting for the matrix output
-          DIRECTORIES=$(find proxmox -type f -name 'terragrunt.hcl' | xargs -n1 dirname | jq -R -s -c 'split("\n")[:-1]')
-          echo "directories=$DIRECTORIES" >> $GITHUB_OUTPUT
 
-  # 2. VALIDATION JOB: Runs validation in parallel for each directory found
-  validate_and_plan:
-    runs-on: ubuntu-latest
-    needs: [find_modules] # Depends on the finder job
-    strategy:
-      fail-fast: false
-      matrix:
-        # Dynamically create jobs based on the list of directories
-        dir: ${{ fromJson(needs.find_modules.outputs.matrix) }}
-        
-    steps:
-      - name: Checkout Module Code
-        uses: actions/checkout@v4
-        
-      # --- 🔑 Credentials and Tool Setup ---
+      # 🔑 1. Setup SSH Agent to Clone Private Modules
       - name: Setup SSH for Private Modules
-        # Required to clone your 'terragrunt-modules.git' during init
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_MODULES }}
 
+      # 🛠️ 2. Setup OpenTofu/Terragrunt Tools
       - name: Setup OpenTofu/Terragrunt Tools
-        # Install the tools specified in your .tool-versions file
+        # This will install Tofu/Terragrunt based on your local tool version file
         uses: gruntwork-io/terragrunt-action@v3
-        with:
-          # REQUIRED FIX: Specify the exact versions needed
-          tg_version: "latest" # or your specific Terragrunt version, e.g., "v0.56.0"
-          tofu_version: "latest"
         
-      # --- 🧪 Validation Run --
-      - name: Run Terragrunt Validation & Plan
-        # Execute commands inside the specific module's directory
-        working-directory: ${{ matrix.dir }}
+      # 🧹 3. Pre-Validation Check
+      - name: Terragrunt HCL Format Check
+        run: terragrunt hcl fmt --check --diff
+
+      # --- 🧪 4. LIVE VALIDATION & PLAN ---
+      - name: Terragrunt Full Validation & Plan
         run: |
-          echo "Validating module in directory: ${{ matrix.dir }}"
+          echo "Starting full multi-module validation using LAN access..."
           
-          # 1. INIT: Initializes module and downloads providers.
-          #    --backend=false forces local state, bypassing the MinIO connection error.
-          terragrunt init --backend=false --upgrade
+          # INITIALIZE: Downloads modules/providers and connects to MinIO via LAN.
+          # We no longer need --backend=false because the connection works on the local runner.
+          terragrunt run-all init --upgrade
           
-          # 2. VALIDATE: Checks HCL and OpenTofu syntax.
-          terragrunt validate
+          # VALIDATE: Checks HCL syntax and configuration logic.
+          terragrunt validate --all
           
-          # 3. PLAN: Generates a plan against the locally initialized state.
-          terragrunt plan -no-color
+          # PLAN: Creates a live plan using the initialized state.
+          terragrunt run-all plan --no-color -lock=false
