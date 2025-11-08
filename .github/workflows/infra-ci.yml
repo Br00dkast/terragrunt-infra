@@ -27,7 +27,7 @@ jobs:
 
       - name: Terragrunt Validate All
         run: |
-          terragrunt run-all init --terragrunt-non-interactive --backend=false --upgrade
+          terragrunt run-all init --backend=false --upgrade
           terragrunt validate --all
           terragrunt plan --all -no-color -lock=false
 
