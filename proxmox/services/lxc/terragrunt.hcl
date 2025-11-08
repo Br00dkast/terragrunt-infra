@@ -24,7 +24,7 @@ inputs = {
 
   shared_password       = get_env("SHARED_PASSWORD", "")
   shared_ssh_public_key = get_env("SHARED_SSH_PUBLIC_KEY", "")
-  
+
   // Define all the LXC containers for this service group in this map.
   lxc_containers = {
     // --- The MinIO server you imported ---
@@ -40,13 +40,13 @@ inputs = {
       disk_size           = 30
       unprivileged        = true
       nesting             = true
-      tags                = [ "lxc" , "services" ,"s3" ]
+      tags                = ["lxc", "services", "s3"]
       manage_credentials  = false
-      
+
       network_interfaces = [
         {
-          name        = "eth0"
-          bridge      = "vmbr0"
+          name   = "eth0"
+          bridge = "vmbr0"
           # vlan_id     = 510
           enable_ipam = true
           static_ip   = "172.16.10.1/25"
@@ -72,9 +72,9 @@ inputs = {
       disk_size           = 16
       unprivileged        = true
       nesting             = true
-      tags                = [ "lxc" , "services" , "runner" ]
-      manage_credentials   = false
-      
+      tags                = ["lxc", "services", "runner"]
+      manage_credentials  = false
+
       network_interfaces = [
         {
           name        = "eth0"
@@ -101,9 +101,9 @@ inputs = {
       disk_size           = 10
       unprivileged        = true
       nesting             = true
-      tags                = [ "lxc" , "services" , "dns" ]
-      manage_credentials   = false
-      
+      tags                = ["lxc", "services", "dns"]
+      manage_credentials  = false
+
       network_interfaces = [
         {
           name        = "eth0"
@@ -117,31 +117,31 @@ inputs = {
       netbox_role_id        = 4
       netbox_site_id        = 1
       netbox_cluster_id     = 1
-          
+
       dns_config = {
-        cname_alias         = "dns01"
+        cname_alias = "dns01"
       }
     },
     "lxc-srv-dns02" = {
-      hostname              = "lxc-srv-dns02"
-      pool_id               = "backup-critical"
-      node_name             = "pve-node02"
-      vm_id                 = 204
-      os_template_file_id   = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-      cores                 = 1
-      memory_dedicated      = 1024
-      disk_datastore_id     = "ceph"
-      disk_size             = 10
-      unprivileged          = true
-      nesting               = true
-      tags                  = [ "lxc" , "services" , "dns" ]
-      manage_credentials    = false
-      
+      hostname            = "lxc-srv-dns02"
+      pool_id             = "backup-critical"
+      node_name           = "pve-node02"
+      vm_id               = 204
+      os_template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+      cores               = 1
+      memory_dedicated    = 1024
+      disk_datastore_id   = "ceph"
+      disk_size           = 10
+      unprivileged        = true
+      nesting             = true
+      tags                = ["lxc", "services", "dns"]
+      manage_credentials  = false
+
       network_interfaces = [
         {
-          name              = "eth0"
-          bridge            = "vmbr0"
-          enable_ipam       = true
+          name        = "eth0"
+          bridge      = "vmbr0"
+          enable_ipam = true
         }
       ]
 
@@ -151,9 +151,38 @@ inputs = {
       netbox_site_id        = 1
       netbox_cluster_id     = 1
 
-      dns_config  = {
-        cname_alias         = "dns02"
+      dns_config = {
+        cname_alias = "dns02"
       }
+    },
+    "lxc-srv-citest" = {
+      hostname            = "lxc-srv-citest"
+      pool_id             = "backup-normal"
+      node_name           = "pve-node03"
+      os_template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+      cores               = 1
+      memory_dedicated    = 1024
+      disk_datastore_id   = "ceph"
+      disk_size           = 10
+      unprivileged        = true
+      nesting             = true
+      tags                = ["lxc", "test"]
+      manage_credentials  = false
+
+      network_interfaces = [
+        {
+          name        = "eth0"
+          bridge      = "vmbr0"
+          enable_ipam = true
+        }
+      ]
+
+      enable_netbox_device  = true
+      netbox_device_type_id = 1
+      netbox_role_id        = 4
+      netbox_site_id        = 1
+      netbox_cluster_id     = 1
+
     },
   }
 }

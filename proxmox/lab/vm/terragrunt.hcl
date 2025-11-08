@@ -8,11 +8,11 @@ include "root" {
 // THIS IS THE FIX: Load the necessary environment variables directly in this file.
 // This ensures they are available for the 'inputs' block below.
 locals {
-  root = read_terragrunt_config(find_in_parent_folders("root.hcl")).locals
+  root                  = read_terragrunt_config(find_in_parent_folders("root.hcl")).locals
   shared_username       = get_env("SHARED_USERNAME", "")
   shared_password       = get_env("SHARED_PASSWORD", "")
   shared_ssh_public_key = get_env("SHARED_SSH_PUBLIC_KEY", "")
-  common_user_data = <<-EOT
+  common_user_data      = <<-EOT
       #cloud-config
       # Define the user account
       users:
@@ -67,7 +67,7 @@ inputs = {
       memory           = 16384
       vm_id            = 301
       root_disk_size   = 40
-      
+
       network_interfaces = [
         {
           bridge      = "vmbr0"
@@ -76,7 +76,7 @@ inputs = {
       ]
       user_data = local.common_user_data
 
-        
+
       // NetBox integration settings
       enable_netbox_device  = true
       netbox_device_type_id = 1

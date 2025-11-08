@@ -16,7 +16,7 @@ locals {
   shared_password         = get_env("SHARED_PASSWORD", "")
   shared_ssh_public_key   = get_env("SHARED_SSH_PUBLIC_KEY", "")
   adguard_admin_password  = get_env("ADGUARD_ADMIN_PASSWORD", "")
-  module_repo_url = "git::git@github.com:Br00dkast/terragrunt-modules.git"
+  module_repo_url         = "git::git@github.com:Br00dkast/terragrunt-modules.git"
 }
 
 generate "backend" {
