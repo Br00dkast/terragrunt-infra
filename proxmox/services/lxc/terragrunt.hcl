@@ -155,34 +155,34 @@ inputs = {
         cname_alias = "dns02"
       }
     },
-    "lxc-srv-citest" = {
-      hostname            = "lxc-srv-citest"
-      pool_id             = "backup-normal"
-      node_name           = "pve-node03"
-      os_template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
-      cores               = 1
-      memory_dedicated    = 1024
-      disk_datastore_id   = "ceph"
-      disk_size           = 10
-      unprivileged        = true
-      nesting             = true
-      tags                = ["lxc", "test"]
-      manage_credentials  = false
+    # "lxc-srv-citest" = {
+    #   hostname            = "lxc-srv-citest"
+    #   pool_id             = "backup-normal"
+    #   node_name           = "pve-node03"
+    #   os_template_file_id = "local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst"
+    #   cores               = 1
+    #   memory_dedicated    = 1024
+    #   disk_datastore_id   = "ceph"
+    #   disk_size           = 10
+    #   unprivileged        = true
+    #   nesting             = true
+    #   tags                = ["lxc", "test"]
+    #   manage_credentials  = false
 
-      network_interfaces = [
-        {
-          name        = "eth0"
-          bridge      = "vmbr0"
-          enable_ipam = true
-        }
-      ]
+    #   network_interfaces = [
+    #     {
+    #       name        = "eth0"
+    #       bridge      = "vmbr0"
+    #       enable_ipam = true
+    #     }
+    #   ]
 
-      enable_netbox_device  = true
-      netbox_device_type_id = 1
-      netbox_role_id        = 4
-      netbox_site_id        = 1
-      netbox_cluster_id     = 1
+    #   enable_netbox_device  = true
+    #   netbox_device_type_id = 1
+    #   netbox_role_id        = 4
+    #   netbox_site_id        = 1
+    #   netbox_cluster_id     = 1
 
-    },
+    # },
   }
 }
