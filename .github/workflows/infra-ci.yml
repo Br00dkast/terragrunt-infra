@@ -26,9 +26,10 @@ jobs:
         run: terragrunt hcl fmt --check --diff
 
       - name: Terragrunt Validate All
-        env:
-          CI_VALIDATION_SKIP_ALL: "true"
-        run: terragrunt validate --all
+        run: |
+          terragrunt run-all init --terragrunt-non-interactive --backend=false --upgrade
+          terragrunt validate --all
+          terragrunt plan --all -no-color -lock=false
 
       - name: Terragrunt Plan All
         uses: wayofdev/gh-action-terragrunt-plan@v1
