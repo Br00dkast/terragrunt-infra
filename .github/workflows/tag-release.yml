@@ -1,0 +1,38 @@
+# .github/workflows/tag-release.yml
+name: Auto Tag and Release
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  versioning:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to push the new tag
+    steps:
+      - name: Checkout Code (Required for full history)
+        uses: actions/checkout@v4
+        with:
+          # IMPORTANT: This fetches all history and tags, which the action needs
+          fetch-depth: 0 
+
+      - name: Automatic Semantic Versioning and Tagging
+        # Using the correct action and a stable version
+        uses: paulhatch/semantic-version@v5.4.0
+        id: semver # Gives us access to outputs like ${{ steps.semver.outputs.version_tag }}
+        with:
+          # Use 'v' prefix for tags (e.g., v1.0.0)
+          tag_prefix: "v"
+          # Default patterns are good for Conventional Commits: 
+          # feat: -> MINOR, feat!: or BREAKING CHANGE: -> MAJOR
+          
+          # This action will automatically create and push the tag to GitHub 
+          # because the job has 'permissions: contents: write'
+
+      - name: Print New Tag (for workflow output)
+        # Check if a new version tag was generated and printed
+        if: steps.semver.outputs.version_tag != ''
+        # NOTE: Using the single-quote syntax to fix the "Nested mappings" YAML error
+        run: 'echo "Successfully tagged new version: ${{ steps.semver.outputs.version_tag }}"'

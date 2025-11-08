@@ -1,0 +1,31 @@
+# .github/workflows/infra-ci.yml
+name: Terragrunt CI Validation
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate_and_plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu/Terragrunt
+        uses: gruntwork-io/terragrunt-action@v3
+        with:
+          tg_version: 'latest' 
+          tofu_version: 'latest' 
+
+      - name: Terragrunt HCL Format Check
+        run: terragrunt hcl fmt --check --diff
+
+      - name: Terragrunt Validate All
+        run: terragrunt run-all validate
+
+      - name: Terragrunt Plan All
+        uses: wayofdev/gh-action-terragrunt-plan@v1
+        with:
+          tg_version: 'latest'
+          tf_version: 'latest'
+          label: 'Infra Plan'
