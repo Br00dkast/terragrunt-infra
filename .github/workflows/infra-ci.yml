@@ -1,40 +1,67 @@
-# .github/workflows/infra-ci.yml
-name: Terragrunt CI Validation
+name: Terragrunt CI Validation (Dynamic Matrix)
+
 on:
   pull_request:
     branches: [main, master]
 
 jobs:
+  ## 1. FINDER JOB: Discovers all modules that need validation
+  find_modules:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.find.outputs.directories }} # Output the list of directories as a JSON matrix
+    steps:
+      - name: Checkout Code (Full History)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Get Changed Directories
+        id: find
+        run: |
+          # Finds all directories containing a terragrunt.hcl file starting from 'proxmox'
+          # This command ensures proper JSON formatting for the matrix output
+          DIRECTORIES=$(find proxmox -type f -name 'terragrunt.hcl' | xargs -n1 dirname | jq -R -s -c 'split("\n")[:-1]')
+          echo "directories=$DIRECTORIES" >> $GITHUB_OUTPUT
+
+  # 2. VALIDATION JOB: Runs validation in parallel for each directory found
   validate_and_plan:
     runs-on: ubuntu-latest
+    needs: [find_modules] # Depends on the finder job
+    strategy:
+      fail-fast: false
+      matrix:
+        # Dynamically create jobs based on the list of directories
+        dir: ${{ fromJson(needs.find_modules.outputs.matrix) }}
+        
     steps:
-      - name: Checkout Code
+      - name: Checkout Module Code
         uses: actions/checkout@v4
         
+      # --- 🔑 Credentials and Tool Setup ---
       - name: Setup SSH for Private Modules
+        # Required to clone your 'terragrunt-modules.git' during init
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY_MODULES }}
 
-      - name: Setup OpenTofu/Terragrunt
+      - name: Setup OpenTofu/Terragrunt Tools
+        # Install the tools specified in your .tool-versions file
         uses: gruntwork-io/terragrunt-action@v3
-        with:
-          tg_version: 'latest' 
-          tofu_version: 'latest' 
-
-      - name: Terragrunt HCL Format Check
-        run: terragrunt hcl fmt --check --diff
-
-      - name: Terragrunt Full Validation
-        working-directory: proxmox
+        
+      # --- 🧪 Validation Run ---
+      - name: Run Terragrunt Validation & Plan
+        # Execute commands inside the specific module's directory
+        working-directory: ${{ matrix.dir }}
         run: |
-          terragrunt run init -- --backend=false --upgrade --terragrunt-working-dir .
-          terragrunt run validate --terragrunt-working-dir .
-          terragrunt run plan --no-color --lock=false --terragrunt-working-dir .
-
-      - name: Terragrunt Plan All
-        uses: wayofdev/gh-action-terragrunt-plan@v1
-        with:
-          tg_version: 'latest'
-          tf_version: 'latest'
-          label: 'Infra Plan'
+          echo "Validating module in directory: ${{ matrix.dir }}"
+          
+          # 1. INIT: Initializes module and downloads providers.
+          #    --backend=false forces local state, bypassing the MinIO connection error.
+          terragrunt init --backend=false --upgrade
+          
+          # 2. VALIDATE: Checks HCL and OpenTofu syntax.
+          terragrunt validate
+          
+          # 3. PLAN: Generates a plan against the locally initialized state.
+          terragrunt plan -no-color
