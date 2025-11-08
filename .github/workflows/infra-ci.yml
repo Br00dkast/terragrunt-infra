@@ -49,7 +49,7 @@ jobs:
         # Install the tools specified in your .tool-versions file
         uses: gruntwork-io/terragrunt-action@v3
         
-      # --- 🧪 Validation Run ---
+      # --- 🧪 Validation Run --
       - name: Run Terragrunt Validation & Plan
         # Execute commands inside the specific module's directory
         working-directory: ${{ matrix.dir }}
