@@ -21,7 +21,7 @@ jobs:
         run: terragrunt hcl fmt --check --diff
 
       - name: Terragrunt Validate All
-        run: terragrunt run-all validate
+        run: terragrunt validate --all
 
       - name: Terragrunt Plan All
         uses: wayofdev/gh-action-terragrunt-plan@v1
