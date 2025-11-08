@@ -44,7 +44,7 @@ EOF
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
-  contents  = <<EOF
+  contents  = local.proxmox_api_url == "" ? "" : <<EOF
 
 provider "proxmox" {
   endpoint  = "${local.proxmox_api_url}"
