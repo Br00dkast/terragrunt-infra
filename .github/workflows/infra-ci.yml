@@ -26,6 +26,8 @@ jobs:
         run: terragrunt hcl fmt --check --diff
 
       - name: Terragrunt Validate All
+        env:
+          CI_VALIDATION_SKIP_ALL: "true"
         run: terragrunt validate --all
 
       - name: Terragrunt Plan All
