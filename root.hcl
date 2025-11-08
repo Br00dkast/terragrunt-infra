@@ -22,8 +22,7 @@ locals {
 generate "backend" {
   path      = "backend.tf"
   if_exists = "overwrite_terragrunt"
-  skip      = local.is_ci_validation
-  contents  = <<EOF
+  contents  = local.is_ci_validation ? "" : <<EOF
 terraform {
   backend "s3" {
     bucket                      = "${local.minio_bucket_name}"
@@ -45,8 +44,7 @@ EOF
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
-  skip      = local.is_ci_validation
-  contents  = <<EOF
+  contents  = local.is_ci_validation ? "" : <<EOF
 
 provider "proxmox" {
   endpoint  = "${local.proxmox_api_url}"
