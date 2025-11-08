@@ -48,6 +48,10 @@ jobs:
       - name: Setup OpenTofu/Terragrunt Tools
         # Install the tools specified in your .tool-versions file
         uses: gruntwork-io/terragrunt-action@v3
+        with:
+          # REQUIRED FIX: Specify the exact versions needed
+          tg_version: "latest" # or your specific Terragrunt version, e.g., "v0.56.0"
+          tofu_version: "latest"
         
       # --- 🧪 Validation Run --
       - name: Run Terragrunt Validation & Plan
