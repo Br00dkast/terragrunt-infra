@@ -22,6 +22,7 @@ locals {
 generate "backend" {
   path      = "backend.tf"
   if_exists = "overwrite_terragrunt"
+  skip = local.is_ci_validation
   contents  = <<EOF
 terraform {
   backend "s3" {
@@ -44,6 +45,7 @@ EOF
 generate "provider" {
   path      = "provider.tf"
   if_exists = "overwrite_terragrunt"
+  skip = local.is_ci_validation
   contents  = <<EOF
 
 provider "proxmox" {
